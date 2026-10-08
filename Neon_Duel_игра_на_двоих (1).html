@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Neon Duel — игра на двоих</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#050914;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+#app{min-height:100vh;background:radial-gradient(circle at 50% 0%,#142b4b 0,#070c17 48%,#03060c 100%);padding:18px}
+.wrap{max-width:1100px;margin:auto}
+.head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:12px}
+.head h1{margin:0;font-size:clamp(24px,4vw,40px)}
+.head p{margin:4px 0 0;color:#9fb2c9}
+.restart,.win-btn{border:0;border-radius:12px;padding:11px 17px;background:#ffb020;color:#171006;font-weight:900;cursor:pointer}
+.scores{display:flex;gap:12px}
+.score{flex:1;background:#080d18;border:1px solid #30415c;border-radius:12px;padding:10px 13px;box-shadow:0 5px 18px #0008}
+.line{display:flex;justify-content:space-between;font-weight:800;margin-bottom:5px}
+.bar{height:15px;background:#20293a;border-radius:99px;overflow:hidden;border:1px solid #000}
+.fill{height:100%;transition:width .15s}
+.blue{background:linear-gradient(90deg,#168cff,#35d8ff)}
+.red{background:linear-gradient(90deg,#ff3f45,#ff7660)}
+.game{margin-top:12px;position:relative;overflow:auto;border:3px solid #263b59;border-radius:16px;background:#080d16;min-height:900px;box-shadow:0 18px 45px #000b}
+.arena{width:932px;min-width:932px;height:900px;position:relative;background-color:#101722;background-image:linear-gradient(90deg,#ffffff08 2px,transparent 2px),linear-gradient(#ffffff08 2px,transparent 2px),radial-gradient(circle at 50% 45%,#263247 0,#151d2a 45%,#080d15 100%);background-size:56px 56px,56px 56px,100% 100%}
+.arena:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#07101d 0 5%,transparent 5% 95%,#07101d 95%),linear-gradient(#07101d 0 7%,transparent 7% 93%,#07101d 93%);box-shadow:inset 0 0 0 18px #0a1019,inset 0 0 0 22px #34435a;opacity:.95}
+.arena:after{content:"";position:absolute;left:50%;top:50%;width:150px;height:70px;transform:translate(-50%,-50%);background:#1d2738;border:4px solid #3b4c63;border-radius:10px;box-shadow:-310px -175px 0 -15px #252f3f,310px -175px 0 -15px #252f3f,-310px 175px 0 -15px #252f3f,310px 175px 0 -15px #252f3f,0 0 35px #0008;z-index:1}
+.fighter{position:absolute;width:48px;height:52px;border-radius:15px 15px 20px 20px;z-index:3;top:0;filter:drop-shadow(0 8px 8px #0009);image-rendering:pixelated;border:2px solid #07101b}
+.fighter:before{content:"";position:absolute;width:42px;height:42px;left:1px;top:-38px;border:3px solid #08101c;border-radius:50%;box-shadow:inset 0 -10px 0 #111827,0 4px 8px #0008}
+.p1{background:linear-gradient(180deg,#168cff 0 25%,#0754b9 25% 100%);box-shadow:0 0 0 3px #07162c,0 9px 18px #0009}
+.p1:before{background:linear-gradient(150deg,#1596f4,#064caa)}
+.p2{background:linear-gradient(180deg,#ff4d52 0 25%,#a51f35 25% 100%);box-shadow:0 0 0 3px #2a0b18,0 9px 18px #0009}
+.p2:before{background:linear-gradient(150deg,#ff765c,#9f172b)}
+.weapon{position:absolute;z-index:5;right:-40px;top:20px;width:44px;height:10px;background:#d9e3ec;border:3px solid #111722;box-shadow:8px 4px 0 -2px #6e7b88,15px 0 0 -2px #202936}
+.weapon:before{content:"";position:absolute;left:4px;top:7px;width:10px;height:12px;background:#202936;border:2px solid #111722;transform:skewX(-15deg)}
+.weapon:after{content:"";position:absolute;right:-8px;top:0;width:7px;height:7px;background:#f8d34b;box-shadow:5px 0 0 #ff9f1c}
+.p2 .weapon{transform:scaleX(-1);right:auto;left:-40px}
+.weapon.sword{width:52px;height:7px;top:16px;background:linear-gradient(90deg,#8b98a8,#f4f7fb 55%,#a9b5c3);border:2px solid #111722;box-shadow:0 0 8px #dff3ff,0 4px 0 -1px #5d6877}
+.weapon.sword:before{left:-4px;top:6px;width:14px;height:16px;background:#8b5a2b;border:2px solid #111722;transform:rotate(-18deg)}
+.weapon.sword:after{right:auto;left:-9px;top:-5px;width:18px;height:4px;background:#e6b94c;box-shadow:none}
+.tag{position:absolute;top:-82px;left:50%;transform:translateX(-50%);width:94px;text-align:center;font-size:10px;font-weight:900}
+.tiny{height:8px;background:#182334;border-radius:9px;overflow:hidden;border:1px solid #ffffff44}
+.tiny div{height:100%;transition:width .15s}
+.p1 .tiny div{background:#27d7ff}.p2 .tiny div{background:#ffb020}
+.center{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);text-align:center;z-index:4;pointer-events:none}
+.status{font-size:clamp(24px,5vw,40px);font-weight:1000;text-shadow:0 3px 18px #000;white-space:nowrap;transition:opacity .8s ease,transform .8s ease}
+.status.hide{opacity:0;transform:scale(.92) translateY(-8px)}
+.sub{color:#aabbd0;margin-top:5px;transition:opacity .8s ease,transform .8s ease;text-shadow:0 2px 10px #000}
+.sub.hide{opacity:0;transform:translateY(-10px);filter:brightness(.25) blur(1px)}
+.shot{position:absolute;width:11px;height:7px;border-radius:50%;background:#ffe066;box-shadow:0 0 14px #ffe066;z-index:5}
+.slash{position:absolute;width:75px;height:75px;border:5px solid #ffb020;border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;transform:rotate(25deg);z-index:5;animation:slash .18s forwards}
+@keyframes slash{to{opacity:0;transform:rotate(80deg) scale(1.35)}}
+.decor{position:absolute;z-index:2}.wall{background:#26364c;border:4px solid #111a29;box-shadow:inset 0 5px 0 #43566d,inset 0 -6px 0 #121a27,0 8px 10px #0008;border-radius:4px}
+.crate{width:58px;height:58px;background:repeating-linear-gradient(45deg,#6e4b36 0 8px,#855b40 8px 16px);border:5px solid #2a1b18;box-shadow:inset 0 0 0 3px #a87851,0 8px 12px #0008}
+.pillar{width:48px;height:105px;background:linear-gradient(90deg,#26364c,#53677c 45%,#1c2a3e);border:5px solid #111a29;border-radius:5px;box-shadow:0 10px 14px #0009}
+.win{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;background:#0009;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .45s ease}
+.win.show{opacity:1;visibility:visible;pointer-events:auto}
+.win-title{font-size:clamp(42px,8vw,76px);font-weight:1000;text-shadow:0 5px 24px #000;margin-bottom:18px}
+.win-btn{padding:12px 24px;font-size:16px;box-shadow:0 7px 20px #0008}
+.tips{position:absolute;bottom:14px;left:14px;right:14px;display:flex;justify-content:space-between;gap:10px;z-index:6}
+.tip{background:#050914e8;border:1px solid #40526b;border-radius:11px;padding:8px 10px;font-size:12px;color:#d8e3f0;box-shadow:0 5px 15px #0007}
+.footer{text-align:center;color:#70849c;font-size:12px;margin-top:9px}
+@media(max-width:650px){#app{padding:10px}.game{min-height:720px}.arena{height:720px}.tips{flex-direction:column}.tip{font-size:11px}.fighter{transform:scale(.9)}.head{align-items:flex-start;flex-direction:column}.restart{width:100%}}
+</style>
+</head>
+<body>
+<main id="app"><div class="wrap">
+<div class="head"><div><h1>⚔️ Neon Duel</h1><p>Арена для двух игроков — до последнего HP</p></div><button class="restart" id="restart">Новая битва</button></div>
+<div class="scores">
+<div class="score"><div class="line"><span>🔵 ИГРОК 1</span><span id="hp1t">100 HP</span></div><div class="bar"><div id="hp1" class="fill blue" style="width:100%"></div></div></div>
+<div class="score"><div class="line"><span>🔴 ИГРОК 2</span><span id="hp2t">100 HP</span></div><div class="bar"><div id="hp2" class="fill red" style="width:100%"></div></div></div>
+</div>
+<div class="game"><div id="arena" class="arena">
+<div class="decor wall" style="left:45%;top:12%;width:110px;height:58px"></div><div class="decor wall" style="left:42%;top:76%;width:150px;height:58px"></div>
+<div class="decor wall" style="left:30%;top:43%;width:95px;height:58px"></div><div class="decor wall" style="left:61%;top:43%;width:95px;height:58px"></div>
+<div class="decor crate" style="left:9%;top:20%"></div><div class="decor crate" style="right:9%;top:20%"></div>
+<div class="decor crate" style="left:9%;bottom:17%"></div><div class="decor crate" style="right:9%;bottom:17%"></div>
+<div class="decor pillar" style="left:1%;top:39%"></div><div class="decor pillar" style="right:1%;top:39%"></div>
+<div id="p1" class="fighter p1"><div class="weapon"></div><div class="tag"><div class="ammo" id="ammo1" style="margin-bottom:4px;padding:3px 6px;border-radius:7px;background:#07111ddd;border:1px solid #ffffff33;white-space:nowrap">🔫 5/5</div><div class="tiny"><div id="t1" style="width:100%"></div></div></div></div>
+<div id="p2" class="fighter p2"><div class="weapon"></div><div class="tag"><div class="ammo" id="ammo2" style="margin-bottom:4px;padding:3px 6px;border-radius:7px;background:#07111ddd;border:1px solid #ffffff33;white-space:nowrap">🔫 5/5</div><div class="tiny"><div id="t2" style="width:100%"></div></div></div></div>
+<div class="center"><div id="status" class="status">БОЙ!</div><div id="sub" class="sub">Попадание снимает 10 HP</div></div>
+<div class="win" id="win"><div class="win-title" id="winTitle">ПОБЕДА!</div><button class="win-btn" id="winBtn">Новый бой</button></div>
+<div class="tips"><div class="tip">🔵 WASD — движение · F — стрельба · E — смена оружия</div><div class="tip">🔴 ↑↓←→ — движение · L — стрельба · M — смена оружия</div></div>
+<div id="reload" class="tip" style="position:absolute;top:14px;left:50%;transform:translateX(-50%);display:none;z-index:8">🔄 Перезарядка: <span id="reloadTime">4</span> сек.</div>
+</div></div>
+<div class="footer">Открой файл в браузере и играй вдвоём на одной клавиатуре.</div>
+</div></main>
+<script>
+(()=>{const arena=document.querySelector('#arena'),p1=document.querySelector('#p1'),p2=document.querySelector('#p2'),hp1=document.querySelector('#hp1'),hp2=document.querySelector('#hp2'),hp1t=document.querySelector('#hp1t'),hp2t=document.querySelector('#hp2t'),t1=document.querySelector('#t1'),t2=document.querySelector('#t2'),status=document.querySelector('#status'),sub=document.querySelector('#sub'),restart=document.querySelector('#restart'),reload=document.querySelector('#reload'),reloadTime=document.querySelector('#reloadTime'),win=document.querySelector('#win'),winTitle=document.querySelector('#winTitle'),winBtn=document.querySelector('#winBtn');let s,keys=new Set(),last=0;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function reset(){s={over:false,a:{x:90,y:280,hp:100,cd:0,shots:0,reload:0,weapon:'gun'},b:{x:arena.clientWidth-145,y:280,hp:100,cd:0,shots:0,reload:0,weapon:'gun'}};status.textContent='БОЙ!';status.classList.remove('hide');sub.textContent='Попадание снимает 10 HP';sub.classList.remove('hide');win.classList.remove('show');reload.style.display='none';render();setTimeout(()=>{if(!s.over){status.classList.add('hide');sub.classList.add('hide')}},2500)}
+function damage(x,amount=10){x.hp=Math.max(0,x.hp-amount);if(x.hp===0){s.over=true;status.textContent=x===s.a?'🔴 ИГРОК 2 ПОБЕДИЛ!':'🔵 ИГРОК 1 ПОБЕДИЛ!';sub.textContent='Решающий удар!';winTitle.textContent=x===s.a?'🔴 ПОБЕДА ИГРОКА 2!':'🔵 ПОБЕДА ИГРОКА 1!';win.classList.add('show')}}
+function attack(a,b){if(s.over||a.cd>0||a.reload>0)return;let dir=a===s.a?1:-1,dx=(b.x+27)-(a.x+27),dy=(b.y+32)-(a.y+32),dist=Math.hypot(dx,dy);if(a.weapon==='gun'){if(a.shots>=5)return;if(dx*dir<=0||Math.abs(dy)>90||dist>650||lineBlocked(a,b))return;a.cd=.12;a.shots++;shoot(a,b);if(a.shots===5){a.reload=4;reload.style.display='block';reloadTime.textContent='4'}damage(b)}else{if(Math.sign(dx)!==dir||Math.abs(dy)>82||dist>168)return;a.cd=.48;slash(a);let step=28,nx=a.x+dir*step;if(!hitWall(nx,a.y))a.x=clamp(nx,8,arena.clientWidth-60);damage(b,25)}render()}
+function switchWeapon(a,el){if(a.reload>0)return;a.weapon=a.weapon==='gun'?'sword':'gun';el.classList.toggle('sword',a.weapon==='sword');render()}
+function obstacles(){return [...arena.querySelectorAll('.decor.wall,.decor.crate,.decor.pillar')].map(e=>{let r=e.getBoundingClientRect(),a=arena.getBoundingClientRect();return{x:r.left-a.left,y:r.top-a.top,w:r.width,h:r.height}})}
+function hitWall(x,y,w=44,h=56){return obstacles().some(o=>x<o.x+o.w&&x+w>o.x&&y<o.y+o.h&&y+h>o.y)}
+function lineBlocked(a,b){let y=a.y+30,lo=Math.min(a.x,b.x)+26,hi=Math.max(a.x,b.x)+26;return obstacles().some(o=>y>o.y&&y<o.y+o.h&&hi>o.x&&lo<o.x+o.w)}
+function shoot(a,b){let e=document.createElement('i');e.className='shot';let dir=a===s.a?1:-1,x=a.x+26+dir*34,y=a.y+30;e.style.left=x+'px';e.style.top=y+'px';arena.append(e);let n=0,id=setInterval(()=>{x+=dir*35;e.style.left=x+'px';if(hitWall(x-5,y-3,11,7)||++n>15||Math.abs(x-(b.x+26))<16){clearInterval(id);e.remove()}},16)}
+function slash(a){let e=document.createElement('i');e.className='slash';e.style.left=(a.x+(a===s.a?42:-67))+'px';e.style.top=(a.y-3)+'px';arena.append(e);setTimeout(()=>e.remove(),190)}
+function render(){let mx=arena.clientWidth-60,my=arena.clientHeight-95;s.a.x=clamp(s.a.x,8,mx);s.b.x=clamp(s.b.x,8,mx);s.a.y=clamp(s.a.y,75,my);s.b.y=clamp(s.b.y,75,my);p1.style.left=s.a.x+'px';p1.style.top=s.a.y+'px';p2.style.left=s.b.x+'px';p2.style.top=s.b.y+'px';hp1.style.width=s.a.hp+'%';hp2.style.width=s.b.hp+'%';t1.style.width=s.a.hp+'%';t2.style.width=s.b.hp+'%';hp1t.textContent=s.a.hp+' HP';hp2t.textContent=s.b.hp+' HP';document.querySelector('#ammo1').textContent=s.a.weapon==='sword'?'⚔️ МЕЧ':s.a.reload>0?'🔄 '+Math.ceil(s.a.reload)+' сек.':'🔫 '+(5-s.a.shots)+'/5';document.querySelector('#ammo2').textContent=s.b.weapon==='sword'?'⚔️ МЕЧ':s.b.reload>0?'🔄 '+Math.ceil(s.b.reload)+' сек.':'🔫 '+(5-s.b.shots)+'/5';p1.querySelector('.weapon').classList.toggle('sword',s.a.weapon==='sword');p2.querySelector('.weapon').classList.toggle('sword',s.b.weapon==='sword')}
+function movePlayer(p,dx,dy){let nx=p.x+dx,ny=p.y+dy;if(!hitWall(nx,p.y))p.x=nx;if(!hitWall(p.x,ny))p.y=ny}
+function loop(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;if(!s.over){let v=300*dt;s.a.cd=Math.max(0,s.a.cd-dt);s.b.cd=Math.max(0,s.b.cd-dt);if(s.a.reload>0){s.a.reload=Math.max(0,s.a.reload-dt);reloadTime.textContent=Math.ceil(s.a.reload);if(s.a.reload===0){s.a.shots=0;reload.style.display='none'}}if(s.b.reload>0){s.b.reload=Math.max(0,s.b.reload-dt);if(s.b.reload===0)s.b.shots=0}if(keys.has('KeyF')&&s.a.cd<=0)attack(s.a,s.b);if(keys.has('KeyL')&&s.b.cd<=0)attack(s.b,s.a);let ax=0,ay=0,bx=0,by=0;if(keys.has('KeyW'))ay-=v;if(keys.has('KeyS'))ay+=v;if(keys.has('KeyA'))ax-=v;if(keys.has('KeyD'))ax+=v;if(keys.has('ArrowUp'))by-=v;if(keys.has('ArrowDown'))by+=v;if(keys.has('ArrowLeft'))bx-=v;if(keys.has('ArrowRight'))bx+=v;movePlayer(s.a,ax,ay);movePlayer(s.b,bx,by);render()}requestAnimationFrame(loop)}
+addEventListener('keydown',e=>{let k=e.code;if(['KeyW','KeyA','KeyS','KeyD','KeyF','KeyE','KeyL','KeyM','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k))e.preventDefault();keys.add(k);if(k==='KeyE')switchWeapon(s.a,p1.querySelector('.weapon'));if(k==='KeyM')switchWeapon(s.b,p2.querySelector('.weapon'));if(k==='KeyF')attack(s.a,s.b);if(k==='KeyL')attack(s.b,s.a)});
+addEventListener('keyup',e=>keys.delete(e.code));restart.onclick=reset;winBtn.onclick=reset;addEventListener('resize',render);reset();requestAnimationFrame(loop)})();
+</script>
+</body>
+</html>
